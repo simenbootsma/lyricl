@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style_flex.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <title>Lyricl</title>
+</head>
+
+<body>
+  <header>
+      <div id="nav-header"><h1>Lyricl</h1></div>
+      <div id="nav-items"><a>New Game</a></div>
+  </header>
+
+  <div id="main">
+    <article>
+        <div id="title-div"><h1>
+            {% for word, cls in song_title %}
+                <span class="{{ cls }}" onclick="toggleLength(event)">{{ word }}</span>
+            {% endfor %}
+        </h1></div>
+        <div id="lyric-div">
+            {% for line in lyrics %}
+                {% for word, cls in line %}
+                    <span class="{{ cls }}" onclick="toggleLength(event)">{{ word }}</span>
+                {% endfor %}
+                <br />
+            {% endfor %}
+        </div>
+    </article>
+    <nav></nav>
+    <aside>
+        <form role="form" method="POST" action="/">
+            <input type="text" name="word" id="text-box" placeholder="">
+            <input type="submit" id="submit" value="Guess">
+        </form>
+        <div id="guesses-div">
+            <table id="guess-table">
+                <tr>
+                    <th>#</th>
+                    <th>Guess</th>
+                    <th>Hits</th>
+                </tr>
+                {% for i, g, h in guessed_words %}
+                    <tr valign="top">
+                        <td class="guess-table-td">{{ i }}</td>
+                        <td class="guess-table-td">{{ g }}</td>
+                        <td class="guess-table-td">{{ h }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </aside>
+  </div>
+  <footer></footer>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+    <title>Lyricl</title>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div class="wrapper">
+    <nav class="nav-container">
+        <div id="nav-header"><h1>Lyricl</h1></div>
+        <div id="nav-items"><a>New Game</a></div>
+    </nav>
+    <div id="guess-div">
+        <form role="form" method="POST" action="/">
+            <input type="text" name="word" id="text-box" placeholder="">
+            <button type="submit" id="btn">Guess</button>
+        </form>
+        <div id="guesses-div">
+            {% for guess in guessed_words %}
+                <span class="white-text">{{ guess }}</span><br/>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="lyric-container">
+        <div id="title-div">
+            {% for word, cls in song_title %}
+                <h1><span class="{{ cls }}" onclick="toggleLength(event)">{{ word }}</span></h1>
+            {% endfor %}
+        </div>
+        <div id="lyric-div">
+            {% for line in lyrics %}
+                {% for word, cls in line %}
+                    <span class="{{ cls }}" onclick="toggleLength(event)">{{ word }}</span>
+                {% endfor %}
+                <br />
+            {% endfor %}
+        </div>
+    </div>
+    <div class="container-div" style="font-size: 16pt;">
+    </div>
+</div>
+
+<div class="wrapper">
+    <div id="warnings">
+    </div>
+    <div class="tab">
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+body {
+  font-family: "helvetica", sans-serif;
+  text-align: center;
+}
+
+.wrapper {
+  overflow: hidden;
+}
+
+.nav-container {
+    background-color: grey;
+    border-bottom: 1px solid;
+    position: fixed;
+    width: 100%;
+    height: 10%;
+    right: 0;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 5%;
+    padding-left: 5%;
+}
+
+#nav-header {
+  float: left;
+}
+
+#nav-items {
+  float: right;
+  font-size: 16pt;
+}
+
+#lyric-div {
+  padding: 10px;
+  font-size: 16pt;
+  position: fixed;
+  text-align: left;
+}
+
+#guess-div {
+  padding-left: 2%;
+  padding-right: 2%;
+  padding-top: 1%;
+  padding-bottom: 1%;
+  text-align: left;
+  float: right;
+  right: 0;
+  top: 5%;
+  height: 100%;
+  position: fixed;
+}
+
+#guesses-div {
+  margin-top: 4%;
+  font-size: 16pt;
+}
+
+span.has-count {
+  color: #CACACA !important;
+}
+
+span.last-guess {
+  color: red;
+}
+
+span.redacted {
+  color: #3F3F3F;
+  background-color: #3F3F3F;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
+span.guessed-word {
+  color: #CACACA;
+  font-size: 14pt;
+}
+
+.container-div {
+  padding-left: 5%;
+  padding-top: 1%;
+  padding-bottom: 1%;
+  text-align: left;
+  float: left;
+}
+
+#text-box {
+  width: 200px;
+  height: 2%;
+  font-size: 16pt;
+}
+
+#btn {
+  width: 100px;
+  height: 2%;
+  font-size: 16pt;
+}
+
+
