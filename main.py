@@ -8,19 +8,23 @@ GUESSES = []
 def main(page: ft.Page):
     global GUESSES
 
-    song_path = 'static/data/songs/Top2000/song0169.txt'
+    song_path = 'static/data/songs/Top2000/song0269.txt'
 
     def add_guess(e):
-        GUESSES.append(guess_field.value)
-        guess_column.controls.insert(2, ft.Row([ft.Text(str(len(GUESSES)), size=22), ft.Text(GUESSES[-1], size=22),
-                                                ft.Text(str(number_of_occurences(song_path, GUESSES[-1])), size=22)],
-                                               alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=300))
+        last_guess = guess_field.value
+        last_guess = [last_guess] if ' ' not in last_guess else last_guess.split(' ')
+        for lg in last_guess:
+            GUESSES.append(lg)
+            guess_column.controls.insert(2, ft.Row([ft.Text(str(len(GUESSES)), size=22), ft.Text(lg, size=22),
+                                                    ft.Text(str(number_of_occurences(song_path, lg)), size=22)],
+                                                   alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=300))
         guess_column.update()
         guess_field.value = ''
         guess_field.update()
         lyrics = process_song(song_path, GUESSES)
         lyrics_box.controls = [ft.Row([ft.Text(word, **word_style[style]) for word, style in line], spacing=3) for line in lyrics]
         lyrics_box.update()
+        guess_field.focus()
 
     def show_length(e):
         print('tap')
@@ -34,7 +38,7 @@ def main(page: ft.Page):
 
     guess_field = ft.TextField(hint_text='Enter guess', on_submit=add_guess)
     guess_column = ft.Column([
-        ft.Row([guess_field, ft.ElevatedButton('Submit', on_click=add_guess)],
+        ft.Row([guess_field, ft.ElevatedButton('Submit', on_click=add_guess, height=50)],
                alignment=ft.alignment.top_right),
         ft.Row([ft.Text('#', size=26, weight=ft.FontWeight.BOLD),
                 ft.Text('Guess', size=26, weight=ft.FontWeight.BOLD),
