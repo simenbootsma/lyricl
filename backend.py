@@ -1,14 +1,13 @@
 GIVEN_WORDS = ['a', 'the', 'an', 'no', 'when', 'over', 'under', 'are', 'of', 'with', 'than', 'then', 'or', 'as',
                  'from', 'in', 'out', 'and', 'which', 'is', 'across', 'after', 'about', 'were', 'into', 'but', 'along',
                  'have', 'on', 'been', 'from', 'until', 'since', 'among', 'if', 'be', 'to', 'that', 'this', 'between',
-                 'had', 'down', 'up', 'off', 'being', "don't", "wasn't", "haven't", "aren't", "shouldn't", "can't",
-               "couldn't"]
+                 'off']
 CHARACTERS = [',', '.', '\n', '(', ')', '"', '-', ' ', '?', '!']
 
 
 def tuple_for_word(word, guesses):
     is_last_guess = len(guesses) > 0 and word.lower() == guesses[-1]
-    is_good_guess = word.lower() in (guesses + GIVEN_WORDS)
+    is_good_guess = is_word_guessed(word, guesses)
     n = len(word) - 1
     redacted = '_' * (n - n // 2) + str(len(word)) + '_' * (n // 2)
     cls = '' if is_good_guess else 'redacted'
@@ -18,6 +17,17 @@ def tuple_for_word(word, guesses):
     return wrd, cls
 
 
+def is_word_guessed(word, guesses):
+    apo_less_guess = [g.replace("'", "") for g in guesses]
+    word = word.lower()
+    if word in guesses or word in GIVEN_WORDS:
+        return True
+    word = word.replace("'", "")
+    if word in apo_less_guess or word in GIVEN_WORDS:
+        return True
+    return False
+
+
 def number_of_occurences(filepath, word):
     with open(filepath, 'r') as f:
         text = f.read()
@@ -25,7 +35,7 @@ def number_of_occurences(filepath, word):
     for c in CHARACTERS:
         text = text.replace(c, ' ')
     words = text.split(' ')
-    return sum([w == word.lower() for w in words])
+    return sum([w == word.lower() for w in words]) + sum([w == word.lower().replace("'", "") for w in words])
 
 
 def process_song(filepath, guesses=None):
@@ -33,6 +43,9 @@ def process_song(filepath, guesses=None):
         guesses = []
     with open(filepath, 'r') as f:
         lines = f.readlines()
+    dash_ind = lines[0].index('-')
+    lines[0] = lines[0][dash_ind+1:] + '-' + lines[0][:dash_ind]
+
     lyrics = []
     for i, ln in enumerate(lines):
         temp = ''
