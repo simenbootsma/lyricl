@@ -41,7 +41,7 @@ def number_of_occurences(filepath, word):
     return sum([w == word for w in all_words])
 
 
-def process_song(filepath, guesses=None):
+def process_song(filepath, guesses=None, full_text=False):
     if guesses is None:
         guesses = []
     with open(filepath, 'r') as f:
@@ -60,7 +60,10 @@ def process_song(filepath, guesses=None):
                 wc += 1
             elif ln[j+1] in CHARACTERS:
                 temp += c
-                cur_line.append(tuple_for_word(temp, guesses))
+                tup = tuple_for_word(temp, guesses)
+                if full_text and tup[1] == 'redacted':
+                    tup = (temp, 'full')
+                cur_line.append(tup)
                 temp = ''
                 wc += 1
             else:

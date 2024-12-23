@@ -5,6 +5,8 @@ import numpy as np
 
 
 GUESSES = []
+COLORS = ["green" + str(n) for n in [50] + list(range(100, 1000, 100))]
+COLORS += [COLORS[-1] for _ in range(50)]
 
 
 def main(page: ft.Page):
@@ -13,7 +15,6 @@ def main(page: ft.Page):
     files = glob('static/data/songs/Top2000/*.txt')
     song_path = files[np.random.randint(len(files))]
     # song_path = 'static/data/songs/Top2000/song0269.txt'
-
 
     def add_guess(e):
         last_guess = guess_field.value
@@ -24,6 +25,7 @@ def main(page: ft.Page):
                 guess_column.controls.insert(2, ft.Row([ft.Text(str(len(GUESSES)), size=22), ft.Text(lg, size=22),
                                                         ft.Text(str(number_of_occurences(song_path, lg)), size=22)],
                                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=300))
+
         guess_column.update()
         guess_field.value = ''
         guess_field.update()
@@ -71,16 +73,31 @@ def generate_lyrics_rows(song_path):
 
     def show_length(e: ft.ControlEvent):
         txt = e.control.content
-        if txt.bgcolor == 'grey':
-            txt.color = 'white' if txt.color == 'grey' else 'grey'
+        if txt.bgcolor != '#00000000':
+            txt.color = COLORS[len(txt.value)] if txt.color == 'black' else 'black'
         txt.update()
 
-    word_style = {'': {'color': 'white', 'bgcolor': '#00000000'}, 'redacted': {'color': 'grey', 'bgcolor': 'grey'}, 'last-guess': {'color': 'red', 'bgcolor': '#00000000'}}
+    def word_style(word, style):
+        if style == 'redacted':
+            return {'color': COLORS[len(word)], 'bgcolor': COLORS[len(word)]}
+        elif style == 'full':
+            return {'color': 'blue', 'bgcolor': '#00000000'}
+        elif style == 'last-guess':
+            return {'color': 'red', 'bgcolor': '#00000000'}
+        return {'color': 'white', 'bgcolor': '#00000000'}
+
     lyrics = process_song(song_path, GUESSES)
-    title_row = ft.Row([ft.Container(ft.Text(word, **(word_style[style]), size=24), on_hover=show_length)
-                        for word, style in lyrics[0]], spacing=3)
-    other_rows = [ft.Row([ft.Container(ft.Text(word, **word_style[style], size=18), on_hover=show_length)
-                          for word, style in line], spacing=3) for line in lyrics[1:]]
+
+    # Check if game is won
+    is_game_won = all([style != 'redacted' for _, style in lyrics[0][:lyrics[0].index(('-', ''))]])
+    if is_game_won:
+        print("Won!")
+        lyrics = process_song(song_path, GUESSES, full_text=True)
+
+    title_row = ft.Row([ft.Container(ft.Text(word, **word_style(word, style), size=24), on_hover=show_length)
+                        for word, style in lyrics[0]], spacing=3, wrap=True)
+    other_rows = [ft.Row([ft.Container(ft.Text(word, **word_style(word, style), size=18), on_hover=show_length)
+                          for word, style in line], spacing=3, wrap=True) for line in lyrics[1:]]
     return [title_row] + other_rows
 
 
