@@ -10,6 +10,7 @@ GAVE_UP = False
 
 files = glob('static/data/songs/Top2000/*.txt')
 SONG_PATH = files[np.random.randint(len(files))]
+MAX_HINTS = 3
 COLORS = ["green" + str(n) for n in [50] + list(range(100, 1000, 100))]
 COLORS += [COLORS[-1] for _ in range(50)]
 LEFT_COL_WIDTH = 500
@@ -20,7 +21,7 @@ COL_HEIGHT = 500
 
 
 def main(page: ft.Page):
-    global GUESSES, HINTS, GAVE_UP, SONG_PATH
+    global GUESSES, HINTS, GAVE_UP, SONG_PATH, MAX_HINTS
 
     def reveal_year(e):
         year_row.controls = [ft.Text("Year: ", size=22, width=60), ft.Text(str(get_year(SONG_PATH)), size=22)]
@@ -37,7 +38,17 @@ def main(page: ft.Page):
                        ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_rank, width=50)], spacing=5)
 
     def add_guess(e):
+        global MAX_HINTS
         last_guess = guess_field.value
+
+        if last_guess == 'extra hint pls':
+            MAX_HINTS += 1
+            hint_button.text = "Hint ({:d}/{:d})".format(MAX_HINTS - len(HINTS), MAX_HINTS)
+            hint_button.disabled = False
+            hint_button.update()
+            update()
+            return
+
         last_guess = [last_guess] if ' ' not in last_guess else last_guess.split(' ')
         for lg in last_guess:
             if lg != '' and lg not in GIVEN_WORDS + GUESSES:
@@ -70,11 +81,11 @@ def main(page: ft.Page):
     def give_hint(e):
         occ = occurrence_list(SONG_PATH)
         occ = [tup for tup in occ if not is_word_guessed(tup[0], GUESSES) and not is_word_in_title(SONG_PATH, tup[0])]
-        ind = int((len(occ)-1) * (len(HINTS)+6)/8)
+        ind = int((len(occ)-1) * 0.5 * (1 + (len(HINTS)+1)/MAX_HINTS))
         hint = occ[ind][0]
         HINTS.append(hint)
-        hint_button.text = "Hint ({:d}/3)".format(3 - len(HINTS))
-        if len(HINTS) == 3:
+        hint_button.text = "Hint ({:d}/{:d})".format(MAX_HINTS - len(HINTS), MAX_HINTS)
+        if len(HINTS) == MAX_HINTS:
             hint_button.disabled = True
         hint_button.update()
 
@@ -109,6 +120,20 @@ def main(page: ft.Page):
 
         give_up_next_button.content = give_up_button
         give_up_next_button.update()
+
+        hint_button.text = "Hint ({:d}/{:d})".format(MAX_HINTS - len(HINTS), MAX_HINTS)
+        hint_button.disabled = False
+        hint_button.update()
+
+        year_row.controls = [ft.Text("Year: ", size=22, width=60),
+                             ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_year, width=50)]
+        rank_row.controls = [ft.Text("Rank: ", size=22, width=60),
+                             ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_rank, width=50)]
+        year_row.update()
+        rank_row.update()
+
+        guess_column.controls = guess_column.controls[:2]
+        guess_column.update()
 
         SONG_PATH = files[np.random.randint(len(files))]
 
@@ -153,7 +178,7 @@ def main(page: ft.Page):
                 ft.Text('Guess', size=26, weight=ft.FontWeight.BOLD),
                 ft.Text('Hits', size=26, weight=ft.FontWeight.BOLD)],
                alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=RIGHT_COL_WIDTH),
-    ], width=RIGHT_COL_WIDTH, height=COL_HEIGHT, scroll=ft.ScrollMode.ADAPTIVE)
+    ], width=RIGHT_COL_WIDTH, height=COL_HEIGHT, scroll=ft.ScrollMode.HIDDEN)
 
     button_row = ft.Row([hint_button, ft.Row([prog_ring, prog_text]), give_up_next_button], width=RIGHT_COL_WIDTH, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
