@@ -16,6 +16,10 @@ def tuple_for_word(word, guesses):
     if is_last_guess:
         cls = 'last-guess'
     wrd = word if is_good_guess else redacted
+
+    # Handle all oooh, ahhh ahah, ahah, ohoh
+    if all([c in 'oh' for c in word]) or all([c in 'ah' for c in word]):
+        wrd, cls = word, ''
     return wrd, cls
 
 
@@ -30,7 +34,17 @@ def is_word_guessed(word, guesses):
     return False
 
 
-def number_of_occurences(filepath, word):
+def is_word_in_title(filepath, word):
+    with open(filepath, 'r') as f:
+        text = f.read()
+    title = text.split('\n')[0]
+    title = title.lower().replace("'", "")
+    for c in CHARACTERS:
+        title = title.replace(c, ' ')
+    return word in title
+
+
+def number_of_occurrences(filepath, word):
     with open(filepath, 'r') as f:
         text = f.read()
     text = text.lower().replace("'", "")
@@ -41,13 +55,38 @@ def number_of_occurences(filepath, word):
     return sum([w == word for w in all_words])
 
 
-def process_song(filepath, guesses=None, full_text=False):
+def occurrence_list(filepath):
+    with open(filepath, 'r') as f:
+        text = f.read()
+    text = text.lower().replace("'", "")
+    for c in CHARACTERS:
+        text = text.replace(c, ' ')
+    all_words = text.split(' ')
+    count = {}
+    for w in all_words:
+        count[w] = 1 if w not in count else count[w] + 1
+    return sorted([(w, c) for w, c in count.items()], key=lambda x: x[1])
+
+
+def percentage_guessed(filepath, guesses):
+    with open(filepath, 'r') as f:
+        text = f.read()
+    text = text.lower().replace("'", "")
+    for c in CHARACTERS:
+        text = text.replace(c, ' ')
+    all_words = text.split(' ')
+    n_shown = sum([is_word_guessed(w, guesses) for w in all_words])
+    return n_shown/len(all_words)
+
+
+def process_song(filepath, guesses=None, won=False, lost=False):
     if guesses is None:
         guesses = []
     with open(filepath, 'r') as f:
         lines = f.readlines()
     dash_ind = lines[0].index('-')
     lines[0] = lines[0][dash_ind+1:] + '  -  ' + lines[0][:dash_ind]
+    lines[-1] += '\n'
 
     lyrics = []
     for i, ln in enumerate(lines):
@@ -61,8 +100,8 @@ def process_song(filepath, guesses=None, full_text=False):
             elif ln[j+1] in CHARACTERS:
                 temp += c
                 tup = tuple_for_word(temp, guesses)
-                if full_text and tup[1] == 'redacted':
-                    tup = (temp, 'full')
+                if (won or lost) and tup[1] == 'redacted':
+                    tup = (temp, 'won' if won else 'lost')
                 cur_line.append(tup)
                 temp = ''
                 wc += 1
@@ -72,15 +111,15 @@ def process_song(filepath, guesses=None, full_text=False):
     return lyrics
 
 
-def get_year(song_path):
-    rank = get_top2000_rank(song_path)
+def get_year(filepath):
+    rank = get_top2000_rank(filepath)
     df = pd.read_excel('NPORadio2-Top-2000-2024.xlsx', engine='openpyxl')
     year = df[df['Notering'] == rank]['Jaartal'].values[0]
     return year
 
 
-def get_top2000_rank(song_path):
-    return int(song_path[-8:-4])
+def get_top2000_rank(filepath):
+    return int(filepath[-8:-4])
 
 
 if __name__ == "__main__":
