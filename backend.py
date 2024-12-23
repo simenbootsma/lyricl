@@ -1,5 +1,7 @@
+import pandas as pd
+
 GIVEN_WORDS = ['a', 'the', 'an', 'no', 'when', 'over', 'under', 'are', 'of', 'with', 'than', 'then', 'or', 'as',
-                 'from', 'in', 'out', 'and', 'which', 'is', 'across', 'after', 'about', 'were', 'into', 'but', 'along',
+                 'from', 'in', 'out', 'and', 'which', 'is', 'across', 'after', 'about', 'where', 'into', 'but', 'along',
                  'have', 'on', 'been', 'from', 'until', 'since', 'among', 'if', 'be', 'to', 'that', 'this', 'between',
                  'off']
 CHARACTERS = [',', '.', '\n', '(', ')', '"', '-', ' ', '?', '!']
@@ -8,8 +10,8 @@ CHARACTERS = [',', '.', '\n', '(', ')', '"', '-', ' ', '?', '!']
 def tuple_for_word(word, guesses):
     is_last_guess = len(guesses) > 0 and word.lower() == guesses[-1]
     is_good_guess = is_word_guessed(word, guesses)
-    n = len(word) - 1
-    redacted = '_' * (n - n // 2) + str(len(word)) + '_' * (n // 2)
+    n = len(word) - len(str(len(word)))
+    redacted = ' ' * n + str(len(word))
     cls = '' if is_good_guess else 'redacted'
     if is_last_guess:
         cls = 'last-guess'
@@ -31,11 +33,12 @@ def is_word_guessed(word, guesses):
 def number_of_occurences(filepath, word):
     with open(filepath, 'r') as f:
         text = f.read()
-    text = text.lower()
+    text = text.lower().replace("'", "")
     for c in CHARACTERS:
         text = text.replace(c, ' ')
-    words = text.split(' ')
-    return sum([w == word.lower() for w in words]) + sum([w == word.lower().replace("'", "") for w in words])
+    all_words = text.split(' ')
+    word = word.lower().replace("'", "")
+    return sum([w == word for w in all_words])
 
 
 def process_song(filepath, guesses=None):
@@ -44,7 +47,7 @@ def process_song(filepath, guesses=None):
     with open(filepath, 'r') as f:
         lines = f.readlines()
     dash_ind = lines[0].index('-')
-    lines[0] = lines[0][dash_ind+1:] + '-' + lines[0][:dash_ind]
+    lines[0] = lines[0][dash_ind+1:] + '  -  ' + lines[0][:dash_ind]
 
     lyrics = []
     for i, ln in enumerate(lines):
@@ -64,6 +67,17 @@ def process_song(filepath, guesses=None):
                 temp += c
         lyrics.append(cur_line)
     return lyrics
+
+
+def get_year(song_path):
+    rank = get_top2000_rank(song_path)
+    df = pd.read_excel('NPORadio2-Top-2000-2024.xlsx', engine='openpyxl')
+    year = df[df['Notering'] == rank]['Jaartal'].values[0]
+    return year
+
+
+def get_top2000_rank(song_path):
+    return int(song_path[-8:-4])
 
 
 if __name__ == "__main__":
