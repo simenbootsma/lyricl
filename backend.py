@@ -99,8 +99,6 @@ def process_song(filepath, guesses=None, won=False, lost=False):
         guesses = []
     with open(filepath, 'r') as f:
         lines = f.readlines()
-    dash_ind = lines[0].index('-')
-    lines[0] = lines[0][dash_ind+1:] + '  -  ' + lines[0][:dash_ind]
     lines[-1] += '\n'
 
     lyrics = []
