@@ -4,11 +4,11 @@ GIVEN_WORDS = ['a', 'the', 'an', 'no', 'when', 'over', 'under', 'are', 'of', 'wi
                  'from', 'in', 'out', 'and', 'which', 'is', 'across', 'after', 'about', 'where', 'into', 'but', 'along',
                  'have', 'on', 'been', 'from', 'until', 'since', 'among', 'if', 'be', 'to', 'that', 'this', 'between',
                  'off']
-CHARACTERS = [',', '.', '\n', '(', ')', '"', '-', ' ', '?', '!']
+CHARACTERS = [',', '.', '\n', '(', ')', '"', '-', ' ', '?', '!', '&']
 
 
 def tuple_for_word(word, guesses):
-    is_last_guess = len(guesses) > 0 and word.lower() == guesses[-1]
+    is_last_guess = len(guesses) > 0 and (word.lower().replace("'", "") == guesses[-1].replace("'", ""))
     is_good_guess = is_word_guessed(word, guesses)
     n = len(word) - len(str(len(word)))
     redacted = ' ' * n + str(len(word))
@@ -18,7 +18,7 @@ def tuple_for_word(word, guesses):
     wrd = word if is_good_guess else redacted
 
     # Handle all oooh, ahhh ahah, ahah, ohoh
-    if all([c in 'oh' for c in word]) or all([c in 'ah' for c in word]):
+    if all([c in 'oah' for c in word]):
         wrd, cls = word, ''
     return wrd, cls
 
@@ -53,6 +53,21 @@ def number_of_occurrences(filepath, word):
     all_words = text.split(' ')
     word = word.lower().replace("'", "")
     return sum([w == word for w in all_words])
+
+
+def first_occurrence_line(filepath, word):
+    word = word.lower().replace("'", "")
+    with open(filepath, 'r') as f:
+        text = f.read()
+    lines = text.split('\n')
+    for i, ln in enumerate(lines):
+        ln = ln.lower().replace("'", "")
+        for c in CHARACTERS:
+            ln = ln.replace(c, " ")
+        ln = " " + ln + " "
+        if " " + word + " " in ln:
+            return i
+    return None  # word does not occur
 
 
 def occurrence_list(filepath):

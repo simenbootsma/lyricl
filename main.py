@@ -37,6 +37,17 @@ def main(page: ft.Page):
     rank_row = ft.Row([ft.Text("Rank: ", size=22, width=60),
                        ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_rank, width=50)], spacing=5)
 
+    def scroll_to_first_occurrence(word):
+        line_num = first_occurrence_line(SONG_PATH, word)
+        if line_num is not None:
+            if line_num == 0:
+                lyrics_box.scroll_to(0, duration=1000)
+            else:
+                lyrics_box.scroll_to(key='line{:d}'.format(line_num-1), duration=1000)
+            GUESSES.remove(word)
+            GUESSES.append(word)
+            update()
+
     def add_guess(e):
         global MAX_HINTS
         last_guess = guess_field.value
@@ -51,12 +62,17 @@ def main(page: ft.Page):
 
         last_guess = [last_guess] if ' ' not in last_guess else last_guess.split(' ')
         for lg in last_guess:
-            if lg != '' and lg not in GIVEN_WORDS + GUESSES:
+            lg = lg.lower().replace("'", "")
+            if (lg != '') and (lg not in GIVEN_WORDS + GUESSES) and (not all([c in 'oah' for c in lg])):
                 GUESSES.append(lg)
-                guess_column.controls.insert(2, ft.Row([ft.Text(str(len(GUESSES)), size=22), ft.Text(lg, size=22),
+                guess_column.controls.insert(2, ft.Row([ft.Text(str(len(GUESSES)), size=22),
+                                                        ft.Container(ft.Text(lg, size=22), on_click=lambda e: scroll_to_first_occurrence(e.control.content.value), key="guess_"+lg),
                                                         ft.Text(str(number_of_occurrences(SONG_PATH, lg)), size=22)],
                                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=300))
+        scroll_to_first_occurrence(last_guess[-1].lower().replace("'", ""))
         update()
+        if len(last_guess) == 1 and last_guess[0].lower().replace("'", "") in GUESSES:
+            guess_column.scroll_to(key='guess_'+last_guess[0].lower().replace("'", ""), duration=500)
 
     def update():
         guess_column.update()
@@ -72,6 +88,8 @@ def main(page: ft.Page):
         prog_text.update()
 
         if not status:
+            hint_button.disabled = True
+            hint_button.update()
             add_next_button()
 
     def add_next_button():
@@ -80,7 +98,7 @@ def main(page: ft.Page):
 
     def give_hint(e):
         occ = occurrence_list(SONG_PATH)
-        occ = [tup for tup in occ if not is_word_guessed(tup[0], GUESSES) and not is_word_in_title(SONG_PATH, tup[0])]
+        occ = [tup for tup in occ if (not is_word_guessed(tup[0], GUESSES)) and (not is_word_in_title(SONG_PATH, tup[0])) and (not all([c in 'oah' for c in tup[0]]))]
         ind = int((len(occ)-1) * 0.5 * (1 + (len(HINTS)+1)/MAX_HINTS))
         hint = occ[ind][0]
         HINTS.append(hint)
@@ -92,7 +110,7 @@ def main(page: ft.Page):
         # add hint to guess column
         GUESSES.append(hint)
         guess_column.controls.insert(2, ft.Row([ft.Icon(ft.Icons.TIPS_AND_UPDATES, color=ft.Colors.AMBER_300),
-                                                ft.Text(hint, size=22, color=ft.Colors.AMBER_300),
+                                                ft.Container(ft.Text(hint, size=22, color=ft.Colors.AMBER_300), on_click=scroll_to_first_occurrence, key="guess_"+hint),
                                                 ft.Text(str(occ[ind][1]), size=22, color=ft.Colors.AMBER_300)],
                                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=300))
 
@@ -233,9 +251,10 @@ def generate_lyrics_rows(song_path):
         still_playing = False
 
     title_row = ft.Row([ft.Container(ft.Text(word, **word_style(word, style), size=24), on_hover=show_length)
-                        for word, style in lyrics[0]], spacing=3, wrap=True)
+                        for word, style in lyrics[0]], spacing=3, wrap=True, key='line0')
     other_rows = [ft.Row([ft.Container(ft.Text(word, **word_style(word, style), size=18), on_hover=show_length)
-                          for word, style in line], spacing=3, wrap=True) for line in lyrics[1:]]
+                          for word, style in line], spacing=3, wrap=True, key='line{:d}'.format(i))
+                  for i, line in enumerate(lyrics[1:])]
     return [title_row] + other_rows, still_playing
 
 
