@@ -1,5 +1,3 @@
-import pandas as pd
-
 GIVEN_WORDS_EN = ['a', 'the', 'an', 'no', 'when', 'are', 'of', 'with', 'than', 'then', 'or', 'as',
                  'from', 'in', 'out', 'and', 'which', 'is', 'across', 'after', 'about', 'where', 'into', 'but', 'along',
                  'have', 'on', 'been', 'until', 'since', 'among', 'if', 'be', 'to', 'that', 'this', 'between',
@@ -148,19 +146,20 @@ def get_year(filepath, category):
     match category:
         case 'top2000':
             rank = get_top2000_rank(filepath)
-            df = pd.read_excel('NPORadio2-Top-2000-2024.xlsx', engine='openpyxl')
-            year = df[df['Notering'] == rank]['Jaartal'].values[0]
-            return year
-        case 'kryst':
-            df = pd.read_csv('100_greatest_christmas_songs_ever.csv')
-            idx = int(filepath[-8:-4])
-            date = df.iloc[idx]['Releasedatum van het album']
-            return int(date[:4])
-        case 'hollands':
-            df = pd.read_csv('top_100_allertijden_nederlandstalig.csv')
-            idx = int(filepath[-8:-4])
-            date = df.iloc[idx]['Releasedatum van het album']
-            return int(date[:4])
+            with open('static/data/top2000_years.txt', 'r') as f:
+                lines = f.read().split('\n')
+            dct = {int(ln.split(': ')[0]): int(ln.split(': ')[1]) for ln in lines}
+            return dct[rank]
+        # case 'kryst':
+        #     df = pd.read_csv('100_greatest_christmas_songs_ever.csv')
+        #     idx = int(filepath[-8:-4])
+        #     date = df.iloc[idx]['Releasedatum van het album']
+        #     return int(date[:4])
+        # case 'hollands':
+        #     df = pd.read_csv('top_100_allertijden_nederlandstalig.csv')
+        #     idx = int(filepath[-8:-4])
+        #     date = df.iloc[idx]['Releasedatum van het album']
+        #     return int(date[:4])
         case _:
             print("Invalid category")
             return 0
