@@ -196,27 +196,27 @@ def main(page: ft.Page):
         menu.open = False
         e.control.page.update()
 
-    def open_stats_dialog(e):
-        e.control.page.overlay.append(stats_dialog)
-        stats_dialog.open = True
-        won, played = STATS['won'], STATS['won'] + STATS['lost']
-        perc_won_text = "(--%)" if played == 0 else "({:.0f}%)".format(100 * won/played)
-        if won == 0:
-            min_g, avg_g, max_g = '-', '-', '-'
-        else:
-            min_g, avg_g, max_g = str(min(STATS['n_guesses'])), str(int(sum(STATS['n_guesses'])/len(STATS['n_guesses']))), str(max(STATS['n_guesses']))
-        stats_dialog.content = ft.Column([ft.Row([ft.Icon(ft.Icons.BAR_CHART), ft.Text("Lyricl stats", size=22)]),
-                                          ft.Divider(),
-                                          ft.Text("Songs guessed", weight=ft.FontWeight.BOLD),
-                                          ft.Text("{:d}/{:d}  ".format(won, played) + perc_won_text),
-                                          ft.Text(''),
-                                          ft.Text("Number of guesses", weight=ft.FontWeight.BOLD),
-                                          ft.Row([ft.Text("Min."), ft.Text('Avg.'), ft.Text('Max.')],
-                                                 width=200, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                                          ft.Row([ft.Text(min_g), ft.Text(avg_g), ft.Text(max_g)],
-                                                 width=200, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                                          ])
-        e.control.page.update()
+    # def open_stats_dialog(e):
+    #     e.control.page.overlay.append(stats_dialog)
+    #     stats_dialog.open = True
+    #     won, played = STATS['won'], STATS['won'] + STATS['lost']
+    #     perc_won_text = "(--%)" if played == 0 else "({:.0f}%)".format(100 * won/played)
+    #     if won == 0:
+    #         min_g, avg_g, max_g = '-', '-', '-'
+    #     else:
+    #         min_g, avg_g, max_g = str(min(STATS['n_guesses'])), str(int(sum(STATS['n_guesses'])/len(STATS['n_guesses']))), str(max(STATS['n_guesses']))
+    #     stats_dialog.content = ft.Column([ft.Row([ft.Icon(ft.Icons.BAR_CHART), ft.Text("Lyricl stats", size=22)]),
+    #                                       ft.Divider(),
+    #                                       ft.Text("Songs guessed", weight=ft.FontWeight.BOLD),
+    #                                       ft.Text("{:d}/{:d}  ".format(won, played) + perc_won_text),
+    #                                       ft.Text(''),
+    #                                       ft.Text("Number of guesses", weight=ft.FontWeight.BOLD),
+    #                                       ft.Row([ft.Text("Min."), ft.Text('Avg.'), ft.Text('Max.')],
+    #                                              width=200, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+    #                                       ft.Row([ft.Text(min_g), ft.Text(avg_g), ft.Text(max_g)],
+    #                                              width=200, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+    #                                       ])
+    #     e.control.page.update()
 
     def toggle_auto_scroll(e):
         global AUTO_SCROLL
@@ -227,30 +227,30 @@ def main(page: ft.Page):
         ALWAYS_SHOW_WORD_LENGTH = not ALWAYS_SHOW_WORD_LENGTH
         update()
 
-    def change_category(e):
-        global CATEGORY, SONG_PATH
-
-        cats = ['top2000', 'kryst', 'hollands']
-        cat = [c for c in cats if c in e.control.content.src][0]
-
-        # print('changed category from {:s} to {:s}'.format(CATEGORY, cat))
-        CATEGORY = cat
-        song_files = glob('static/data/songs/{:s}_processed/*.txt'.format(CATEGORY))
-        SONG_PATH = song_files[np.random.randint(len(song_files))]
-
-        cats.remove(CATEGORY)
-        category_menu.items = [
-            ft.PopupMenuItem(content=ft.Image('static/{:s}_logo.png'.format(s), height=30),
-                             on_click=change_category)
-            for s in other_cats
-        ]
-        category_menu.content = ft.Image('static/{:s}_logo.png'.format(CATEGORY), height=30)
-        category_menu.update()
-
-        rank_row.visible = cat == 'top2000'
-        rank_row.disabled = cat != 'top2000'
-        rank_row.update()
-        update()
+    # def change_category(e):
+    #     global CATEGORY, SONG_PATH
+    #
+    #     cats = ['top2000', 'kryst', 'hollands']
+    #     cat = [c for c in cats if c in e.control.content.src][0]
+    #
+    #     # print('changed category from {:s} to {:s}'.format(CATEGORY, cat))
+    #     CATEGORY = cat
+    #     song_files = glob('static/data/songs/{:s}_processed/*.txt'.format(CATEGORY))
+    #     SONG_PATH = song_files[np.random.randint(len(song_files))]
+    #
+    #     cats.remove(CATEGORY)
+    #     category_menu.items = [
+    #         ft.PopupMenuItem(content=ft.Image('static/{:s}_logo.png'.format(s), height=30),
+    #                          on_click=change_category)
+    #         for s in other_cats
+    #     ]
+    #     category_menu.content = ft.Image('static/{:s}_logo.png'.format(CATEGORY), height=30)
+    #     category_menu.update()
+    #
+    #     rank_row.visible = cat == 'top2000'
+    #     rank_row.disabled = cat != 'top2000'
+    #     rank_row.update()
+    #     update()
 
     give_up_alert = ft.AlertDialog(
         modal=True,
@@ -287,7 +287,7 @@ def main(page: ft.Page):
             ft.Text('Auto-scroll', weight=ft.FontWeight.BOLD, size=20),
             ft.Row([ft.Text("Off"), ft.Switch(on_change=toggle_auto_scroll, value=AUTO_SCROLL), ft.Text("On")]),
             ft.Text(''),
-            ft.TextButton('Show stats', on_click=open_stats_dialog, icon=ft.Icons.BAR_CHART)
+            # ft.TextButton('Show stats', on_click=open_stats_dialog, icon=ft.Icons.BAR_CHART)
         ], spacing=10), padding=20)],
         on_dismiss=dismiss_menu
     )
