@@ -7,25 +7,46 @@ import pandas as pd
 import time
 
 
+# C:\Users\Simen\PycharmProjects\lyricl\venv\Scripts\python.exe C:\Users\Simen\PycharmProjects\lyricl\load_songs.py
+# 286/2000 [13.78 s/song] Deurdonderen (Live) - Normaal
+# ERROR on number 286
+#
+# 318/2000 [14.78 s/song] Born Slippy - Underworld
+# ERROR on number 318
+#
+# 386/2000 [14.53 s/song] Zij Gelooft In Mij (2004) - André Hazes
+# ERROR on number 386
+#
+# 389/2000 [14.69 s/song] Dansen Aan Zee - BLØF
+# ERROR on number 389
+
+# Genius missing: 286, 318, 386, 389, 390, 614, 660, 688, 724, 800, 841, 850, 1053, 1129, 1297, 1330, 1366, 1390,
+# 1464, 1465, 1529, 1546, 1650, 1704, 1708, 1771, 1780, 1879, 1883, 1885, 1907,
+
 # songtekst.net missing: 139, 253, 351, 377, 478, 518, 524, 544, 701, 702, 726, 756, 852, 953
 
 
 def main():
-    top2000 = pd.read_excel('NPORadio2-Top-2000-2024.xlsx')
-    top2000 = top2000.iloc[251:]
+    # top2000 = pd.read_excel('NPORadio2-Top-2000-2024.xlsx')
+    # idx = [286, 318, 386, 389, 390, 614, 660, 688, 724, 800, 841, 850, 1053, 1129, 1297, 1330, 1366, 1390, 1464, 1465, 1529, 1546, 1650, 1704, 1708, 1771, 1780, 1879, 1883, 1885, 1907,]
+    # idx = [i-1 for i in idx]
+    # top2000 = top2000.iloc[idx]
+    kryst = pd.read_csv("top_100_allertijden_nederlandstalig.csv")
     driver = open_genius()
     st = time.time()
     cnt = 0
-    for i, song in top2000.iterrows():
+    for i, song in kryst.iterrows():
         try:
-            print("\r{:d}/{:d} [{:.2f} s/song] {:s} - {:s}".format(song['Notering'], 2000, 0 if cnt == 0 else (time.time()-st)/cnt, song['Titel'], song['Artiest']), end='')
-            txt = load_lyrics_genius(song['Titel'], song['Artiest'], driver=driver)
-            filepath = 'static/data/songs/Top2000_genius/song{:04d}.txt'.format(song['Notering'])
+            # rank, title, artist = song['Numering'], song['Titel'], song['Artiest']
+            title, artist = song['Nummmernaam'], song['Naam van artiest']
+            print("\r{:d}/{:d} [{:.2f} s/song] {:s} - {:s}".format(i, len(kryst), 0 if cnt == 0 else (time.time()-st)/cnt, title, artist), end='')
+            txt = load_lyrics_genius(title, artist, driver=driver)
+            filepath = 'static/data/songs/Hollands/song{:04d}.txt'.format(i)
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(txt)
         except:
-            print("\nERROR on number {:d}\n".format(song["Notering"]))
-            driver.close()
+            print("\nERROR on number {:d}\n".format(i))
+            # driver.close()
             driver = open_genius()
         cnt += 1
     driver.close()

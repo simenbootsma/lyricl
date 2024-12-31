@@ -11,12 +11,15 @@ USERNAME = None
 STATS = {'won': 0, 'lost': 0, 'n_guesses': []}
 ALWAYS_SHOW_WORD_LENGTH = False
 AUTO_SCROLL = True
+STILL_PLAYING = True
 
-files = glob('static/data/songs/Top2000_genius_processed/*.txt')
+CATEGORY = 'top2000'
+files = glob('static/data/songs/{:s}_processed/*.txt'.format(CATEGORY))
+# files = [fn for fn in files if get_year(fn, CATEGORY) == 1978]
 SONG_PATH = files[np.random.randint(len(files))]
 MAX_HINTS = 5
 COLORS = ["green" + str(n) for n in [50] + list(range(100, 1000, 100))]
-COLORS += [COLORS[-1] for _ in range(50)]
+COLORS += [COLORS[-1] for _ in range(100)]
 LEFT_COL_WIDTH = 500
 RIGHT_COL_WIDTH = 400
 COL_SPACING = 100
@@ -25,10 +28,10 @@ COL_HEIGHT = 450
 
 
 def main(page: ft.Page):
-    global GUESSES, HINTS, GAVE_UP, SONG_PATH, MAX_HINTS, STATS, USERNAME, ALWAYS_SHOW_WORD_LENGTH, AUTO_SCROLL
+    global GUESSES, HINTS, GAVE_UP, SONG_PATH, MAX_HINTS, STATS, USERNAME, ALWAYS_SHOW_WORD_LENGTH, AUTO_SCROLL, CATEGORY
 
     def reveal_year(e):
-        year_row.controls = [ft.Text("Year: ", size=22, width=60), ft.Text(str(get_year(SONG_PATH)), size=22)]
+        year_row.controls = [ft.Text("Year: ", size=22, width=60), ft.Text(str(get_year(SONG_PATH, CATEGORY)), size=22)]
         year_row.update()
 
     def reveal_rank(e):
@@ -40,6 +43,9 @@ def main(page: ft.Page):
                        ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_year, width=50)], spacing=5)
     rank_row = ft.Row([ft.Text("Rank: ", size=22, width=60),
                        ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_rank, width=50)], spacing=5)
+    if CATEGORY != 'top2000':
+        rank_row.visible = False
+        rank_row.disabled = True
 
     def scroll_to_first_occurrence(word):
         line_num = first_occurrence_line(SONG_PATH, word)
@@ -67,7 +73,7 @@ def main(page: ft.Page):
 
         last_guess = [last_guess] if ' ' not in last_guess else last_guess.split(' ')
         for lg in last_guess:
-            lg = lg.lower().replace("'", "")
+            lg = remove_accents(lg)
             if (lg != '') and (lg not in GIVEN_WORDS + GUESSES) and (not all([c in 'oah' for c in lg])):
                 GUESSES.append(lg)
                 guess_column.controls.insert(2, ft.Row([ft.Text(str(len(GUESSES)), size=22),
@@ -79,14 +85,15 @@ def main(page: ft.Page):
 
         if AUTO_SCROLL:
             scroll_to_first_occurrence(last_guess[-1].lower().replace("'", ""))
-            if len(last_guess) == 1 and last_guess[0].lower().replace("'", "") in GUESSES:
+            if len(last_guess) == 1 and last_guess[0].lower().replace("'", "") in GUESSES[:-1]:
                 guess_column.scroll_to(key='guess_'+last_guess[0].lower().replace("'", ""), duration=500)
 
     def update():
+        global STILL_PLAYING
         guess_column.update()
         guess_field.value = ''
         guess_field.update()
-        lyrics_box.controls, status = generate_lyrics_rows(SONG_PATH)
+        lyrics_box.controls = generate_lyrics_rows(SONG_PATH)
         lyrics_box.update()
         guess_field.focus()
 
@@ -95,7 +102,7 @@ def main(page: ft.Page):
         prog_ring.update()
         prog_text.update()
 
-        if not status:
+        if not STILL_PLAYING:
             hint_button.disabled = True
             hint_button.update()
             add_next_button()
@@ -108,6 +115,12 @@ def main(page: ft.Page):
         occ = occurrence_list(SONG_PATH)
         occ = [tup for tup in occ if (not is_word_guessed(tup[0], GUESSES)) and (not is_word_in_title(SONG_PATH, tup[0])) and (not all([c in 'oah' for c in tup[0]]))]
         ind = int((len(occ)-1) * 0.5 * (1 + (len(HINTS)+1)/MAX_HINTS))
+
+        while ind >= len(occ):
+            ind -= 1
+        if ind < 0:
+            return
+
         hint = occ[ind][0]
         HINTS.append(hint)
         hint_button.text = "Hint ({:d}/{:d})".format(MAX_HINTS - len(HINTS), MAX_HINTS)
@@ -119,16 +132,17 @@ def main(page: ft.Page):
         GUESSES.append(hint)
         guess_column.controls.insert(2, ft.Row([ft.Icon(ft.Icons.TIPS_AND_UPDATES, color=ft.Colors.AMBER_300),
                                                 ft.Container(ft.Text(hint, size=22, color=ft.Colors.AMBER_300),
-                                                             on_click=scroll_to_first_occurrence, key="guess_"+hint),
+                                                             on_click=lambda ev: scroll_to_first_occurrence(hint), key="guess_"+hint),
                                                 ft.Text(str(occ[ind][1]), size=22, color=ft.Colors.AMBER_300)],
                                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN, width=RIGHT_COL_WIDTH))
 
         update()
 
     def give_up(e):
-        global GAVE_UP
+        global GAVE_UP, STILL_PLAYING
         GAVE_UP = True
         close_alert(e)
+        STILL_PLAYING = False
         update()
 
     def close_alert(e):
@@ -141,7 +155,7 @@ def main(page: ft.Page):
         e.control.page.update()
 
     def next_song(e):
-        global GUESSES, HINTS, GAVE_UP, SONG_PATH
+        global GUESSES, HINTS, GAVE_UP, SONG_PATH, STILL_PLAYING
         GUESSES, HINTS = [], []
         GAVE_UP = False
 
@@ -154,15 +168,21 @@ def main(page: ft.Page):
 
         year_row.controls = [ft.Text("Year: ", size=22, width=60),
                              ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_year, width=50)]
+        year_row.update()
+
         rank_row.controls = [ft.Text("Rank: ", size=22, width=60),
                              ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, on_click=reveal_rank, width=50)]
-        year_row.update()
+        if CATEGORY != 'top2000':
+            rank_row.visible = False
+            rank_row.disabled = True
         rank_row.update()
 
         guess_column.controls = guess_column.controls[:2]
         guess_column.update()
 
         SONG_PATH = files[np.random.randint(len(files))]
+
+        STILL_PLAYING = True
 
         update()
 
@@ -207,6 +227,31 @@ def main(page: ft.Page):
         ALWAYS_SHOW_WORD_LENGTH = not ALWAYS_SHOW_WORD_LENGTH
         update()
 
+    def change_category(e):
+        global CATEGORY, SONG_PATH
+
+        cats = ['top2000', 'kryst', 'hollands']
+        cat = [c for c in cats if c in e.control.content.src][0]
+
+        # print('changed category from {:s} to {:s}'.format(CATEGORY, cat))
+        CATEGORY = cat
+        song_files = glob('static/data/songs/{:s}_processed/*.txt'.format(CATEGORY))
+        SONG_PATH = song_files[np.random.randint(len(song_files))]
+
+        cats.remove(CATEGORY)
+        category_menu.items = [
+            ft.PopupMenuItem(content=ft.Image('static/{:s}_logo.png'.format(s), height=30),
+                             on_click=change_category)
+            for s in other_cats
+        ]
+        category_menu.content = ft.Image('static/{:s}_logo.png'.format(CATEGORY), height=30)
+        category_menu.update()
+
+        rank_row.visible = cat == 'top2000'
+        rank_row.disabled = cat != 'top2000'
+        rank_row.update()
+        update()
+
     give_up_alert = ft.AlertDialog(
         modal=True,
         title=ft.Text("Please confirm"),
@@ -247,7 +292,7 @@ def main(page: ft.Page):
         on_dismiss=dismiss_menu
     )
 
-    lyrics_box = ft.Column(generate_lyrics_rows(SONG_PATH)[0], width=LEFT_COL_WIDTH, height=COL_HEIGHT, scroll=ft.ScrollMode.ALWAYS)
+    lyrics_box = ft.Column(generate_lyrics_rows(SONG_PATH), width=LEFT_COL_WIDTH, height=COL_HEIGHT, scroll=ft.ScrollMode.ALWAYS)
     hint_button = ft.ElevatedButton('Hint ({:d}/{:d})'.format(MAX_HINTS, MAX_HINTS), on_click=give_hint, icon=ft.Icons.TIPS_AND_UPDATES)
     prog_ring = ft.ProgressRing(value=percentage_guessed(SONG_PATH, GUESSES), stroke_width=10, height=15, width=15, bgcolor='grey')
     prog_text = ft.Text("{:.0f}%".format(100 * prog_ring.value), size=22)
@@ -265,9 +310,16 @@ def main(page: ft.Page):
     ], width=RIGHT_COL_WIDTH, height=COL_HEIGHT, scroll=ft.ScrollMode.HIDDEN)
 
     button_row = ft.Row([hint_button, ft.Row([prog_ring, prog_text]), give_up_next_button], width=RIGHT_COL_WIDTH, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+    other_cats = ['top2000', 'kryst', 'hollands']
+    other_cats.remove(CATEGORY)
+    # category_menu = ft.PopupMenuButton(items=[
+    #     ft.PopupMenuItem(content=ft.Image('static/{:s}_logo.png'.format(s), height=30), on_click=change_category)
+    #     for s in other_cats
+    # ], content=ft.Image('static/{:s}_logo.png'.format(CATEGORY), height=30))
+    top2000_logo = ft.Image('static/top2000_logo.png', height=30)
     header_row = ft.Row([
         ft.Text("Lyricl", size=30, weight=ft.FontWeight.BOLD),
-        ft.Row([ft.Image('static/top2000_logo.png', height=30), ft.Text(" edition", size=26)]),
+        top2000_logo,
         menu_button
     ], width=FULL_WIDTH, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
@@ -288,7 +340,7 @@ def main(page: ft.Page):
 
 
 def generate_lyrics_rows(song_path):
-    global GUESSES, GAVE_UP, STATS, ALWAYS_SHOW_WORD_LENGTH
+    global GUESSES, GAVE_UP, STATS, ALWAYS_SHOW_WORD_LENGTH, STILL_PLAYING
 
     def show_length(e: ft.ControlEvent):
         if not ALWAYS_SHOW_WORD_LENGTH:
@@ -311,20 +363,19 @@ def generate_lyrics_rows(song_path):
         return {'color': 'white', 'bgcolor': '#00000000'}
 
     lyrics = process_song(song_path, GUESSES)
-    still_playing = True
 
     # Check if game is won
     is_game_won = all([style != 'redacted' for _, style in lyrics[0][:lyrics[0].index(('-', ''))]])
-    if is_game_won and still_playing:
+    if is_game_won:
         lyrics = process_song(song_path, GUESSES, won=True)
-        still_playing = False
-        STATS['won'] += 1
-        STATS['n_guesses'].append(len(GUESSES))
+        if STILL_PLAYING:
+            STATS['n_guesses'].append(len(GUESSES))
+            STATS['won'] += 1
+            STILL_PLAYING = False
 
     # Check if player gave up
     if GAVE_UP:
         lyrics = process_song(song_path, GUESSES, lost=True)
-        still_playing = False
         STATS['lost'] += 1
 
     title_row = ft.Row([ft.Container(ft.Text(word, **word_style(word, style), size=24), on_hover=show_length)
@@ -332,7 +383,7 @@ def generate_lyrics_rows(song_path):
     other_rows = [ft.Row([ft.Container(ft.Text(word, **word_style(word, style), size=18), on_hover=show_length)
                           for word, style in line], spacing=3, wrap=True, key='line{:d}'.format(i))
                   for i, line in enumerate(lyrics[1:])]
-    return [title_row] + other_rows, still_playing
+    return [title_row] + other_rows
 
 
 if __name__ == '__main__':
